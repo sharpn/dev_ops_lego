@@ -10,10 +10,20 @@ variable "availability_zones" {
   type = list(string)
 }
 
-variable "private_subnets" {
-  type = list(string)
+variable "private" {
+  type = object({
+    subnets = list(string)
+    tags    = map(string)
+  })
 }
 
-variable "public_subnets" {
-  type = list(string)
+variable "public" {
+  type = object({
+    subnets = list(string)
+    tags    = map(string)
+  })
+}
+
+variable "tags" {
+  type = map(string)
 }
