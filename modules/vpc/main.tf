@@ -3,25 +3,14 @@ resource "aws_vpc" "vpc" {
 
   enable_dns_hostnames = true
 
-  tags = {
-    "Name" = var.name
-  }
-}
-
-
-###############################################################################
-# PUBLIC
-###############################################################################
-
-resource "aws_route_table" "public_route_table" {
-  count = length(var.public.subnets) > 0 ? 1 : 0
-
-  vpc_id = aws_vpc.vpc.id
-
   tags = merge({
-    "Name" = "${var.name}-public"
+    "Name" = var.name
   }, var.tags)
 }
+
+###############################################################################
+# SUBNETS
+###############################################################################
 
 resource "aws_subnet" "public_subnet" {
   count = length(var.public.subnets) > 0 ? length(var.public.subnets) : 0
@@ -35,22 +24,9 @@ resource "aws_subnet" "public_subnet" {
   tags = merge({
     Name = format("${var.name}-public-%s", element(var.availability_zones, count.index))
   }, var.public.tags, var.tags)
+
+  map_public_ip_on_launch = true
 }
-
-###############################################################################
-# PRIVATE
-###############################################################################
-
-resource "aws_route_table" "private_route_table" {
-  count = length(var.private.subnets) > 0 ? 1 : 0
-
-  vpc_id = aws_vpc.vpc.id
-
-  tags = merge({
-    "Name" = "${var.name}-private"
-  }, var.tags)
-}
-
 
 resource "aws_subnet" "private_subnet" {
   count = length(var.private.subnets) > 0 ? length(var.private.subnets) : 0
@@ -65,6 +41,57 @@ resource "aws_subnet" "private_subnet" {
     Name = format("${var.name}-private-%s", element(var.availability_zones, count.index))
   }, var.private.tags, var.tags)
 }
+
+###############################################################################
+# INTERNET GATEWAY
+###############################################################################
+
+resource "aws_internet_gateway" "internet_gateway" {
+  vpc_id = aws_vpc.vpc.id
+
+  tags = merge({
+    Name = "${var.name}"
+  }, var.tags)
+}
+
+###############################################################################
+# ROUTING
+###############################################################################
+
+resource "aws_route_table" "public_route_table" {
+  vpc_id = aws_vpc.vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.internet_gateway.id
+  }
+
+  tags = merge({
+    "Name" = "${var.name}-public"
+  }, var.tags)
+}
+
+resource "aws_route_table" "private_route_table" {
+  count = length(var.private.subnets) > 0 ? 1 : 0
+
+  vpc_id = aws_vpc.vpc.id
+
+  tags = merge({
+    "Name" = "${var.name}-private"
+  }, var.tags)
+}
+
+###############################################################################
+# ROUTE ASSOCIATIONS
+###############################################################################
+
+resource "aws_route_table_association" "internet_access" {
+  count = length(var.public.subnets) > 0 ? length(var.public.subnets) : 0
+
+  subnet_id      = aws_subnet.public_subnet[count.index].id
+  route_table_id = aws_route_table.main.id
+}
+
 
 ###############################################################################
 # NAT
@@ -96,9 +123,9 @@ resource "aws_nat_gateway" "nat_gateway" {
 }
 
 resource "aws_route" "private_nat_gateway" {
-  route_table_id         = element(aws_route_table.private_route_table[*].id, 0)
+  route_table_id         = aws_route_table.private_route_table.id
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = element(aws_nat_gateway.nat_gateway[*].id, 0)
+  nat_gateway_id         = aws_nat_gateway.nat_gateway.id
 
   timeouts {
     create = "5m"
@@ -106,31 +133,42 @@ resource "aws_route" "private_nat_gateway" {
 }
 
 ###############################################################################
-# INTERNET GATEWAY
+# SECURITY GROUPS
 ###############################################################################
 
-resource "aws_internet_gateway" "internet_gateway" {
+resource "aws_security_group" "public_sg" {
+  name   = "public-sg"
   vpc_id = aws_vpc.vpc.id
 
-  tags = merge({
-    Name = "${var.name}"
-  }, var.tags)
+  tags = {
+    Name = "public-sg"
+  }
 }
 
-###############################################################################
-# ROUTE TABLES
-###############################################################################
-
-resource "aws_route_table_association" "private_route_associations" {
-  count = length(var.private.subnets) > 0 ? length(var.private.subnets) : 0
-
-  subnet_id      = element(aws_subnet.private_subnet[*].id, count.index)
-  route_table_id = element(aws_route_table.private_route_table[*].id, 0)
+resource "aws_security_group_rule" "sg_ingress_public_443" {
+  security_group_id = aws_security_group.public_sg.id
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
 }
 
-resource "aws_route_table_association" "public_route_associations" {
-  count = length(var.public.subnets) > 0 ? length(var.public.subnets) : 0
+esource "aws_security_group_rule" "sg_ingress_public_80" {
+  security_group_id = aws_security_group.public_sg.id
+  type              = "ingress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+}
 
-  subnet_id      = element(aws_subnet.public_subnet[*].id, count.index)
-  route_table_id = aws_route_table.public_route_table[0].id
+## Egress rule
+resource "aws_security_group_rule" "sg_egress_public" {
+  security_group_id = aws_security_group.public_sg.id
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  cidr_blocks       = ["0.0.0.0/0"]
 }

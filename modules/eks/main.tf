@@ -1,4 +1,76 @@
 ###############################################################################
+# SECURITY GROUPS
+###############################################################################
+
+resource "aws_security_group" "data_plane_sg" {
+  name   = "k8s-data-plane-sg"
+  vpc_id = aws_vpc.custom_vpc.id
+
+  tags = {
+    Name = "k8s-data-plane-sg"
+  }
+}
+
+resource "aws_security_group_rule" "nodes" {
+  description       = "Allow nodes to communicate with each other"
+  security_group_id = aws_security_group.data_plane_sg.id
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 65535
+  protocol          = "-1"
+  cidr_blocks       = flatten([var.private_subnet_cidr_blocks, var.public_subnet_cidr_blocks])
+}
+
+resource "aws_security_group_rule" "nodes_inbound" {
+  description       = "Allow worker Kubelets and pods to receive communication from the cluster control plane"
+  security_group_id = aws_security_group.data_plane_sg.id
+  type              = "ingress"
+  from_port         = 1025
+  to_port           = 65535
+  protocol          = "tcp"
+  cidr_blocks       = flatten([var.private_subnet_cidr_blocks])
+}
+
+resource "aws_security_group_rule" "node_outbound" {
+  security_group_id = aws_security_group.data_plane_sg.id
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+
+resource "aws_security_group" "control_plane_sg" {
+  name   = "k8s-control-plane-sg"
+  vpc_id = aws_vpc.custom_vpc.id
+
+  tags = {
+    Name = "k8s-control-plane-sg"
+  }
+}
+
+# Security group traffic rules
+## Ingress rule
+resource "aws_security_group_rule" "control_plane_inbound" {
+  security_group_id = aws_security_group.control_plane_sg.id
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 65535
+  protocol          = "tcp"
+  cidr_blocks       = flatten([var.private_subnet_cidr_blocks, var.public_subnet_cidr_blocks])
+}
+
+## Egress rule
+resource "aws_security_group_rule" "control_plane_outbound" {
+  security_group_id = aws_security_group.control_plane_sg.id
+  type              = "egress"
+  from_port         = 0
+  to_port           = 65535
+  protocol          = "-1"
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+
+###############################################################################
 # IAM
 ###############################################################################
 
@@ -28,6 +100,7 @@ resource "aws_iam_role_policy_attachment" "attachments" {
   policy_arn = "arn:aws:iam::aws:policy/${each.value}"
   role       = aws_iam_role.role.name
 }
+
 
 resource "aws_iam_role" "worker_role" {
   name = "${var.cluster.name}-eks-worker-role"
@@ -69,12 +142,13 @@ resource "aws_eks_cluster" "cluster" {
   vpc_config {
     subnet_ids = var.vpc.private_subnet_ids
     security_group_ids = [
-      aws_security_group.cluster.id,
-      aws_security_group.workers.id
+      aws_security_group.cluster.id
     ]
   }
 
   version = var.cluster.version
+
+
 
   depends_on = [
     aws_iam_role.role,
@@ -99,43 +173,16 @@ resource "aws_security_group" "cluster" {
   tags = {
     "Name" = var.cluster.name
   }
-}
 
-resource "aws_security_group_rule" "cluster_inbound" {
-  description              = "Allow worker nodes to communicate with the cluster API Server"
-  from_port                = 443
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.cluster.id
-  source_security_group_id = aws_security_group.workers.id
-  to_port                  = 443
-  type                     = "ingress"
-}
-
-resource "aws_security_group_rule" "cluster_outbound" {
-  description              = "Allow cluster API Server to communicate with the worker nodes"
-  from_port                = 1024
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.cluster.id
-  source_security_group_id = aws_security_group.workers.id
-  to_port                  = 65535
-  type                     = "egress"
-}
-
-
-###############################################################################
-# WORKER SECURITY GROUP
-###############################################################################
-
-resource "aws_security_group" "workers" {
-  name_prefix = var.cluster.name
-  description = "Security group for all notes in the cluster"
-  vpc_id      = var.vpc.id
-  tags = {
-    "Name"                                      = "${var.cluster.name}-workers_sg"
-    "kubernetes.io/cluster/${var.cluster.name}" = "owned"
+  egress { # Outbound Rule
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  egress {
+  # Ingress allows Inbound traffic to EKS cluster from the  Internet 
+  ingress { # Inbound Rule
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -143,25 +190,6 @@ resource "aws_security_group" "workers" {
   }
 }
 
-resource "aws_security_group_rule" "nodes" {
-  description              = "Allow nodes to communicate with each other"
-  from_port                = 0
-  protocol                 = "-1"
-  security_group_id        = aws_security_group.workers.id
-  source_security_group_id = aws_security_group.workers.id
-  to_port                  = 65535
-  type                     = "ingress"
-}
-
-resource "aws_security_group_rule" "nodes_inbound" {
-  description              = "Allow worker Kubelets and pods to receive communication from the cluster control plane"
-  from_port                = 1025
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.workers.id
-  source_security_group_id = aws_security_group.cluster.id
-  to_port                  = 65535
-  type                     = "ingress"
-}
 
 
 
@@ -192,3 +220,4 @@ resource "aws_eks_node_group" "node-ec2" {
     aws_iam_role.worker_role
   ]
 }
+
