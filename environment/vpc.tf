@@ -20,7 +20,7 @@ module "vpc_and_subnets" {
   public = {
     subnets = ["10.0.3.0/24", "10.0.4.0/24"]
     tags = {
-      "kubernetes.io/role/elb" = "1"
+      "kubernetes.io/role/internal-elb" = "1"
     }
   }
 
