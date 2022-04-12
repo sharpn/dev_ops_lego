@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+### [1.2.1](https://github.com/sharpn/dev_ops_lego/compare/v1.2.0...v1.2.1) (2022-04-12)
+
+
+### Bug Fixes
+
+* starting to work out how networks connect together ([bb4b729](https://github.com/sharpn/dev_ops_lego/commit/bb4b729dd33517102d81ae9d8b0af3f00c1fdaf5))
+
 ## [1.2.0](https://github.com/sharpn/dev_ops_lego/compare/v1.1.0...v1.2.0) (2022-04-12)
 
 
