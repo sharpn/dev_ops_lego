@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+### [1.0.1](https://github.com/sharpn/dev_ops_lego/compare/v1.0.0...v1.0.1) (2022-04-12)
+
+
+### Bug Fixes
+
+* changing release config so it packages correct files ([e9beeb2](https://github.com/sharpn/dev_ops_lego/commit/e9beeb26d51f2ae2b50ae80e5b2516dde4612a45))
+
 ## 1.0.0 (2022-04-12)
 
 
