@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0](https://github.com/sharpn/dev_ops_lego/compare/v1.1.0...v1.2.0) (2022-04-12)
+
+
+### Features
+
+* starting work on eks module, creating security groups and main/worker nodes ([94adf1f](https://github.com/sharpn/dev_ops_lego/commit/94adf1f8fbe0f7453574f688355c757c4fdd4db0))
+
+
+### Bug Fixes
+
+* adding tags to vpc's ([606ccde](https://github.com/sharpn/dev_ops_lego/commit/606ccde9ede95156065a248349bb7cd353dbe5f2))
+
 ## [1.1.0](https://github.com/sharpn/dev_ops_lego/compare/v1.0.1...v1.1.0) (2022-04-12)
 
 
