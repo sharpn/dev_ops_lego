@@ -18,9 +18,9 @@ resource "aws_route_table" "public_route_table" {
 
   vpc_id = aws_vpc.vpc.id
 
-  tags = {
+  tags = merge({
     "Name" = "${var.name}-public"
-  }
+  }, var.tags)
 }
 
 resource "aws_subnet" "public_subnet" {
@@ -46,9 +46,9 @@ resource "aws_route_table" "private_route_table" {
 
   vpc_id = aws_vpc.vpc.id
 
-  tags = {
+  tags = merge({
     "Name" = "${var.name}-private"
-  }
+  }, var.tags)
 }
 
 
@@ -73,9 +73,9 @@ resource "aws_subnet" "private_subnet" {
 resource "aws_eip" "external_nat_ip" {
   vpc = true
 
-  tags = {
+  tags = merge({
     Name = "${var.name}-nat-ip"
-  }
+  }, var.tags)
 }
 
 locals {
@@ -112,9 +112,9 @@ resource "aws_route" "private_nat_gateway" {
 resource "aws_internet_gateway" "internet_gateway" {
   vpc_id = aws_vpc.vpc.id
 
-  tags = {
+  tags = merge({
     Name = "${var.name}"
-  }
+  }, var.tags)
 }
 
 ###############################################################################
