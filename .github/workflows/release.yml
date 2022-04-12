@@ -6,8 +6,8 @@ on:
     branches:
       - main
     paths:
-      - '**/*.tpl'
-      - '**/*.py'
+      - 'environment/.terraform-version'
+      - 'environment/.terraform.lock.hcl'
       - '**/*.tf'
       - '.github/workflows/release.yml'
 
