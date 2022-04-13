@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0](https://github.com/sharpn/dev_ops_lego/compare/v1.2.2...v1.3.0) (2022-04-13)
+
+
+### Features
+
+* adding second worker pool to eks ([901ecf4](https://github.com/sharpn/dev_ops_lego/commit/901ecf4c609449d433854c64a8919cc6cf940b0d))
+
 ### [1.2.2](https://github.com/sharpn/dev_ops_lego/compare/v1.2.1...v1.2.2) (2022-04-13)
 
 
