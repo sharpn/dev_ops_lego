@@ -1,3 +1,90 @@
+locals {
+  public_sg_rules = {
+    sg_ingress_public_443 = {
+      security_group_id = aws_security_group.public_sg.id
+      type              = "ingress"
+      from_port         = 443
+      to_port           = 443
+      protocol          = "tcp"
+      cidr_blocks       = ["0.0.0.0/0"]
+    },
+    sg_ingress_public_80 = {
+      security_group_id = aws_security_group.public_sg.id
+      type              = "ingress"
+      from_port         = 80
+      to_port           = 80
+      protocol          = "tcp"
+      cidr_blocks       = ["0.0.0.0/0"]
+    },
+    sg_egress_public = {
+      security_group_id = aws_security_group.public_sg.id
+      type              = "egress"
+      from_port         = 0
+      to_port           = 0
+      protocol          = "-1"
+      cidr_blocks       = ["0.0.0.0/0"]
+    }
+  }
+
+  data_plane_rules = {
+    nodes = {
+      description       = "Allow the nodes to communicate with each other"
+      security_group_id = aws_security_group.data_plane_sg.id
+
+      type      = "ingress"
+      from_port = 0
+      to_port   = 65535
+      protocol  = "-1"
+
+      cidr_blocks = flatten([
+        module.vpc_and_subnets.public_cidr_blocks,
+        module.vpc_and_subnets.private_cidr_blocks,
+      ])
+    },
+    nodes_inbound = {
+      description       = "Allow worker kubelets to recieve communication from the API server"
+      security_group_id = aws_security_group.data_plane_sg.id
+
+      type      = "ingress"
+      from_port = 1025
+      to_port   = 65535
+      protocol  = "tcp"
+
+      cidr_blocks = flatten([module.vpc_and_subnets.private_cidr_blocks])
+    },
+    node_outbound = {
+      security_group_id = aws_security_group.data_plane_sg.id
+      type              = "egress"
+      from_port         = 0
+      to_port           = 0
+      protocol          = "-1"
+      cidr_blocks       = ["0.0.0.0/0"]
+    }
+  }
+
+  control_plane_rules = {
+    control_plane_inbound = {
+      security_group_id = aws_security_group.control_plane_sg.id
+      type              = "ingress"
+      from_port         = 0
+      to_port           = 65535
+      protocol          = "tcp"
+      cidr_blocks = flatten([
+        module.vpc_and_subnets.public_cidr_blocks,
+        module.vpc_and_subnets.private_cidr_blocks,
+      ])
+    },
+    control_plane_outbound = {
+      security_group_id = aws_security_group.control_plane_sg.id
+      type              = "egress"
+      from_port         = 0
+      to_port           = 65535
+      protocol          = "-1"
+      cidr_blocks       = ["0.0.0.0/0"]
+    }
+  }
+}
+
 ###############################################################################
 # PUBLIC
 ###############################################################################
@@ -11,32 +98,17 @@ resource "aws_security_group" "public_sg" {
   }
 }
 
-resource "aws_security_group_rule" "sg_ingress_public_443" {
-  security_group_id = aws_security_group.public_sg.id
-  type              = "ingress"
-  from_port         = 443
-  to_port           = 443
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-}
+resource "aws_security_group_rule" "public_rules" {
+  for_each = local.public_sg_rules
 
-resource "aws_security_group_rule" "sg_ingress_public_80" {
-  security_group_id = aws_security_group.public_sg.id
-  type              = "ingress"
-  from_port         = 80
-  to_port           = 80
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-}
+  security_group_id = each.value.security_group_id
+  type              = each.value.type
+  from_port         = each.value.from_port
+  to_port           = each.value.to_port
+  protocol          = each.value.protocol
+  cidr_blocks       = each.value.cidr_blocks
 
-## Egress rule
-resource "aws_security_group_rule" "sg_egress_public" {
-  security_group_id = aws_security_group.public_sg.id
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
+  depends_on = [aws_security_group.public_sg]
 }
 
 ###############################################################################
@@ -52,43 +124,21 @@ resource "aws_security_group" "data_plane_sg" {
   }
 }
 
-## INGRESS
-resource "aws_security_group_rule" "nodes" {
-  description       = "Allow the nodes to communicate with each other"
-  security_group_id = aws_security_group.data_plane_sg.id
+resource "aws_security_group_rule" "node_rules" {
+  for_each = local.data_plane_rules
 
-  type      = "ingress"
-  from_port = 0
-  to_port   = 65535
-  protocol  = "-1"
+  description       = try(each.value.desciption, null)
+  security_group_id = each.value.security_group_id
+  type              = each.value.type
+  from_port         = each.value.from_port
+  to_port           = each.value.to_port
+  protocol          = each.value.protocol
 
-  cidr_blocks = flatten([
-    module.vpc_and_subnets.public_cidr_blocks,
-    module.vpc_and_subnets.private_cidr_blocks,
-  ])
-}
+  cidr_blocks = each.value.cidr_blocks
 
-resource "aws_security_group_rule" "nodes_inbound" {
-  description       = "Allow worker kubelets to recieve communication from the API server"
-  security_group_id = aws_security_group.data_plane_sg.id
-
-  type      = "ingress"
-  from_port = 1025
-  to_port   = 65535
-  protocol  = "tcp"
-
-  cidr_blocks = flatten([module.vpc_and_subnets.private_cidr_blocks])
-}
-
-
-## EGRESS
-resource "aws_security_group_rule" "node_outbound" {
-  security_group_id = aws_security_group.data_plane_sg.id
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
+  depends_on = [
+    aws_security_group.data_plane_sg
+  ]
 }
 
 ###############################################################################
@@ -104,26 +154,13 @@ resource "aws_security_group" "control_plane_sg" {
   }
 }
 
+resource "aws_security_group_rule" "control_plane_rules" {
+  for_each = local.control_plane_rules
 
-## INGRESS
-resource "aws_security_group_rule" "control_plane_inbound" {
-  security_group_id = aws_security_group.control_plane_sg.id
-  type              = "ingress"
-  from_port         = 0
-  to_port           = 65535
-  protocol          = "tcp"
-  cidr_blocks = flatten([
-    module.vpc_and_subnets.public_cidr_blocks,
-    module.vpc_and_subnets.private_cidr_blocks,
-  ])
-}
-
-## EGRESS
-resource "aws_security_group_rule" "control_plane_outbound" {
-  security_group_id = aws_security_group.control_plane_sg.id
-  type              = "egress"
-  from_port         = 0
-  to_port           = 65535
-  protocol          = "-1"
-  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = each.value.security_group_id
+  type              = each.value.type
+  from_port         = each.value.from_port
+  to_port           = each.value.to_port
+  protocol          = each.value.protocol
+  cidr_blocks       = each.value.cidr_blocks
 }
