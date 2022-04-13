@@ -8,10 +8,6 @@ variable "cidr" {
   type = string
 }
 
-variable "environment" {
-  type = string
-}
-
 variable "availability_zones" {
   description = "The availability zones of the vpc"
   type = list(string)
