@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0](https://github.com/sharpn/dev_ops_lego/compare/v1.4.0...v1.5.0) (2022-04-13)
+
+
+### Features
+
+* adding hello-world application ([562ae81](https://github.com/sharpn/dev_ops_lego/commit/562ae81c6a3cb7c5c9f5ac63dba43048a19ac5f7))
+
 ## [1.4.0](https://github.com/sharpn/dev_ops_lego/compare/v1.3.0...v1.4.0) (2022-04-13)
 
 
