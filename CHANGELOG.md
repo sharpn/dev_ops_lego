@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0](https://github.com/sharpn/dev_ops_lego/compare/v1.3.0...v1.4.0) (2022-04-13)
+
+
+### Features
+
+* adding aws and kubernetes providers to fix the region ([ca14eae](https://github.com/sharpn/dev_ops_lego/commit/ca14eae8506db24919044bf97eb2d6909771e290))
+* adding security groups so the nodes can talk to each other ([d86678b](https://github.com/sharpn/dev_ops_lego/commit/d86678bd185d229705f073ae2653dff56b942055))
+
 ## [1.3.0](https://github.com/sharpn/dev_ops_lego/compare/v1.2.2...v1.3.0) (2022-04-13)
 
 
