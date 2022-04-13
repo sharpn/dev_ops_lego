@@ -2,7 +2,6 @@ locals {
   cluster_name = "test-cluster"
 }
 
-
 // could use terraform-aws-modules/eks/aws instead of this module
 module "eks_cluster" {
   source = "../modules/eks"
@@ -19,14 +18,14 @@ module "eks_cluster" {
         }
         instance_type = "t2.small"
       },
-      # "worker_2" = {
-      #   scaling = {
-      #     min_size     = 1
-      #     max_size     = 3
-      #     desired_size = 2
-      #   }
-      #   instance_type = "t2.micro"
-      # }
+      "worker_2" = {
+        scaling = {
+          min_size     = 1
+          max_size     = 3
+          desired_size = 2
+        }
+        instance_type = "t2.micro"
+      }
     }
   }
 
