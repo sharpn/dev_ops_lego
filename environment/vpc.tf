@@ -4,7 +4,7 @@ data "aws_availability_zones" "available_zones" {}
 module "vpc_and_subnets" {
   source = "../modules/vpc"
 
-  name = "test-vpc"
+  name = "${var.environment_name}-vpc"
   cidr = "10.0.0.0/16"
 
   availability_zones = data.aws_availability_zones.available_zones.names
