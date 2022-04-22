@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+### [1.5.1](https://github.com/sharpn/dev_ops_lego/compare/v1.5.0...v1.5.1) (2022-04-13)
+
+
+### Bug Fixes
+
+* changing incorrect tags for subnets ([0f6a498](https://github.com/sharpn/dev_ops_lego/commit/0f6a498f4ac5ea428aea2ef50223b5d0b232da9a))
+
 ## [1.5.0](https://github.com/sharpn/dev_ops_lego/compare/v1.4.0...v1.5.0) (2022-04-13)
 
 
