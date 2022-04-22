@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0](https://github.com/sharpn/dev_ops_lego/compare/v1.5.1...v1.6.0) (2022-04-22)
+
+
+### Features
+
+* using variables for configuration ([7f09224](https://github.com/sharpn/dev_ops_lego/commit/7f09224b0f50355d208f5c3c71859adc60b2d328))
+
 ### [1.5.1](https://github.com/sharpn/dev_ops_lego/compare/v1.5.0...v1.5.1) (2022-04-13)
 
 
