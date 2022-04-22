@@ -16,7 +16,15 @@ terraform apply --var-file prod.tfvars.json
 
 The script will output the url of the loadbalancer once the apply has complete, you should be able to navigate to this after the loadbalancer has finished provisioning the dns.
 
-The hello world application that is installed as part of the script will show . From my experimenting it looks like the loadbalancer uses sticky sessions, so you will most likely always hit the same pod on each request. By using incognito you can usually hit another pod
+The hello world application that is installed as part of the script will show 
+```json
+{
+  hostname: "{hostname}",
+  uptime: {uptime},
+  podname: "{podname}"
+}
+```
+From my experimenting it looks like the loadbalancer uses sticky sessions, so you will most likely always hit the same pod on each request. By using incognito you can usually hit another pod
 
 
 ## Folder Structure
