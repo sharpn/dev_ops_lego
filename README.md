@@ -14,6 +14,16 @@ terraform init
 terraform apply --var-file prod.tfvars.json
 ```
 
+## Destroying the environment
+```bash
+cd environment
+
+#if using tfenv
+tfenv install
+
+terraform destroy --var-file prod.tfvars.json
+```
+
 The script will output the url of the loadbalancer once the apply has complete, you should be able to navigate to this after the loadbalancer has finished provisioning the dns.
 
 The hello world application that is installed as part of the script will show 
